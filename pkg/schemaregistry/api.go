@@ -6,5 +6,7 @@ type API interface {
 }
 
 func NewRegistry(host string) API {
-	return &restAPI{host}
+	var api restAPI
+	api.host = host
+	return &api
 }

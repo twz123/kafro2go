@@ -9,7 +9,10 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/pkg/errors"
 	"github.com/twz123/kafro2go/pkg/rdkafka"
+	"github.com/twz123/kafro2go/pkg/schemaregistry"
 )
 
 const (
@@ -38,6 +41,7 @@ func run(osSignals <-chan os.Signal) (int, string) {
 	partitions := flag.String("partitions", "", "A comma separated list of partitions to consume. Defaults to all if omitted.")
 	offset := flag.String("position", "newest", "The start position inside the partitions. Either \"oldest\" or \"newest\".")
 	bufferSize := flag.Int("buffer-size", 256, "The buffer size of the message channel.")
+	registry := flag.String("registry", "", "Host and port of the Schema Registry.")
 	flag.Parse()
 
 	if *brokers == "" {
@@ -68,6 +72,10 @@ func run(osSignals <-chan os.Signal) (int, string) {
 		return xCLIUsage, fmt.Sprintf("Invalid offset: %s.", *offset)
 	}
 
+	if *registry == "" {
+		return xCLIUsage, "No Schema Registry specified."
+	}
+
 	messages, closeTopic, err := rdkafka.ReadFromTopic(brokerList, *topic, partitionList, initialOffset, *bufferSize)
 	if err != nil {
 		return xGeneralError, err.Error()
@@ -78,17 +86,43 @@ func run(osSignals <-chan os.Signal) (int, string) {
 		closeTopic()
 	}()
 
-	for msg := range messages {
-		fmt.Printf("%v\n", msg)
-		fmt.Printf("Partition:\t%d\n", msg.TopicPartition.Partition)
-		fmt.Printf("Offset:\t%d\n", msg.TopicPartition.Offset)
-		fmt.Printf("Key:\t%s\n", string(msg.Key))
-		fmt.Printf("Value:\t%s\n", string(msg.Value))
-		fmt.Println()
+	if err := printMessages(messages, schemaregistry.NewRegistry(*registry)); err != nil {
+		closeTopic()
+		for _ = range messages {
+			// wait until channel is closed
+		}
+		return xGeneralError, fmt.Sprintf("Error during consumption: %v", err)
 	}
 
 	fmt.Println("Exiting main loop")
 	return xOK, ""
+}
+
+func printMessages(messages <-chan *kafka.Message, registry schemaregistry.API) error {
+	for msg := range messages {
+		if len(msg.Value) < 5 {
+			return fmt.Errorf("message is too short to extract a schema ID: %d bytes on partition %d at offset %d",
+				len(msg.Value), msg.TopicPartition.Partition, msg.TopicPartition.Offset)
+		}
+
+		if msg.Value[0] != 0 {
+			return fmt.Errorf("illegal magic byte on partition %d at offset %d: %d",
+				int(msg.Value[0]), msg.TopicPartition.Partition, msg.TopicPartition.Offset)
+		}
+
+		// 4 bytes int32 big endian
+		schemaID := ((int32(msg.Value[1]) << 24) + (int32(msg.Value[2]) << 16) + (int32(msg.Value[3]) << 8) + (int32(msg.Value[4]) << 0))
+
+		schema, err := registry.GetSchemaByID(int64(schemaID))
+		if err != nil {
+			return errors.Wrapf(err, "failed to fetch schema with ID %d on partition %d at offset %d",
+				schemaID, msg.TopicPartition.Partition, msg.TopicPartition.Offset)
+		}
+
+		fmt.Printf("yep: %d: %s", schemaID, schema)
+	}
+
+	return nil
 }
 
 func toInt32Slice(csv string) (result []int32, err error) {

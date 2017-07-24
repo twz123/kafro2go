@@ -15,10 +15,29 @@ const (
 )
 
 type restAPI struct {
-	host string
+	host          string
+	cachedSchemas map[int64]string
 }
 
 func (api *restAPI) GetSchemaByID(id int64) (string, error) {
+	if schema, ok := api.cachedSchemas[id]; ok {
+		return schema, nil
+	}
+
+	schema, err := api.getSchemaByID(id)
+	if err != nil {
+		return "", err
+	}
+
+	if api.cachedSchemas == nil {
+		api.cachedSchemas = make(map[int64]string, 16)
+	}
+
+	api.cachedSchemas[id] = schema
+	return schema, nil
+}
+
+func (api *restAPI) getSchemaByID(id int64) (string, error) {
 	var schemaString struct {
 		Schema string `json:"schema"`
 	}
