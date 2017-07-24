@@ -1,0 +1,25 @@
+FROM golang:1.8.3-alpine3.6
+
+# Install build-deps and fetch librdkafka sources
+RUN set -eux; \
+    apk add --no-cache --virtual .build-deps \
+        # required for downloading via https
+        openssl \
+        # build-deps for librdkafka
+        bash python2 make gcc g++ musl-dev \
+        # go stuff
+        git \
+    ; \
+    wget -q -O /tmp/librdkafka.tar.gz https://github.com/edenhill/librdkafka/archive/v0.11.0.tar.gz; \
+    echo 'd4baf9a0d08767128913bb4e39d68995a95d7efa834fcf3e4f60c3156003b887 */tmp/librdkafka.tar.gz' | sha256sum -c -; \
+    mkdir /librdkafka; \
+    tar --strip-components=1 -xzf /tmp/librdkafka.tar.gz -C /librdkafka
+
+# Install librdkafka 
+RUN cd /librdkafka \
+    && ./configure --enable-static --prefix=/usr \
+    && make -j \
+    && make check \
+    && make install
+
+CMD bash
