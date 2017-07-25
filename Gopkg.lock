@@ -8,6 +8,18 @@
   version = "v0.9.4"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/golang/snappy"
+  packages = ["."]
+  revision = "553a641470496b2327abcac10b36396bd98e45c9"
+
+[[projects]]
+  name = "github.com/karrick/goavro"
+  packages = ["."]
+  revision = "7266c9d32b3d0f05950d7aeaa47b506066978a1f"
+  version = "v0.3.1"
+
+[[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
@@ -16,6 +28,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "82ad9bc6bf775e25aab52302917771d74c315888003063e7a9f8c8dcc096310e"
+  inputs-digest = "76038df20e505c2f518432790ebf9759cb43200ac223e77ea377a888f8d3c1e0"
   solver-name = "gps-cdcl"
   solver-version = 1

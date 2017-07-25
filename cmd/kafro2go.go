@@ -11,6 +11,7 @@ import (
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/pkg/errors"
+	"github.com/twz123/kafro2go/pkg/coding"
 	"github.com/twz123/kafro2go/pkg/rdkafka"
 	"github.com/twz123/kafro2go/pkg/schemaregistry"
 )
@@ -99,6 +100,8 @@ func run(osSignals <-chan os.Signal) (int, string) {
 }
 
 func printMessages(messages <-chan *kafka.Message, registry schemaregistry.API) error {
+	coder := coding.NewJsonTranscoder(registry.GetSchemaByID, os.Stdout)
+
 	for msg := range messages {
 		if len(msg.Value) < 5 {
 			return fmt.Errorf("message is too short to extract a schema ID: %d bytes on partition %d at offset %d",
@@ -113,13 +116,10 @@ func printMessages(messages <-chan *kafka.Message, registry schemaregistry.API) 
 		// 4 bytes int32 big endian
 		schemaID := ((int32(msg.Value[1]) << 24) + (int32(msg.Value[2]) << 16) + (int32(msg.Value[3]) << 8) + (int32(msg.Value[4]) << 0))
 
-		schema, err := registry.GetSchemaByID(int64(schemaID))
-		if err != nil {
-			return errors.Wrapf(err, "failed to fetch schema with ID %d on partition %d at offset %d",
+		if err := coder.Transcode(int64(schemaID), msg.Value[5:]); err != nil {
+			return errors.Wrapf(err, "failed to transcode message in partition %d at offset %d",
 				schemaID, msg.TopicPartition.Partition, msg.TopicPartition.Offset)
 		}
-
-		fmt.Printf("yep: %d: %s", schemaID, schema)
 	}
 
 	return nil

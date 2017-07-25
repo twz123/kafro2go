@@ -1,0 +1,13 @@
+diff --git a/union.go b/union.go
+index 9d8ada4..4cb5a50 100644
+--- a/union.go
++++ b/union.go
+@@ -87,7 +87,7 @@ func buildCodecForTypeDescribedBySlice(st map[string]*Codec, enclosingNamespace
+ 				return nil, buf, nil
+ 			}
+ 			// Non-nil values are wrapped in a map with single key set to type name of value
+-			return Union(allowedTypes[index], decoded), buf, nil
++			return decoded, buf, nil
+ 		},
+ 		binaryFromNative: func(buf []byte, datum interface{}) ([]byte, error) {
+ 			switch v := datum.(type) {

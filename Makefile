@@ -15,6 +15,8 @@ Gopkg.lock: Gopkg.toml
 	find vendor/ -type f -name \*_test.* -delete
 # this file doesn't conform to golangs convetions for tests and pulls in the testing framework
 	rm -f vendor/github.com/confluentinc/confluent-kafka-go/kafka/testhelpers.go
+# apply a patch to goavro to flatten unions
+	( cd vendor/github.com/karrick/goavro && patch ) < unionless.patch
 
 clean:
 	rm -f kafro2go .$(BUILDER_IMAGE)
