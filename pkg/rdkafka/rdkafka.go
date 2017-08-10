@@ -18,6 +18,7 @@ func ReadFromTopic(brokers []string, topic string, partitions []int32, position 
 		"session.timeout.ms":              6000,
 		"go.events.channel.enable":        true,
 		"go.application.rebalance.enable": true,
+		"enable.auto.commit":              false,
 		"default.topic.config": kafka.ConfigMap{
 			"auto.offset.reset": "earliest",
 		},
