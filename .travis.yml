@@ -1,0 +1,13 @@
+os:
+- osx
+
+language: go
+go:
+- "1.11"
+
+branches:
+  only:
+  - osx
+
+script: |
+  go build -a --ldflags '-linkmode external -extldflags "-static"' -tags static_all cmd/kafro2go.go
