@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/karrick/goavro"
+	"github.com/linkedin/goavro"
 	"github.com/pkg/errors"
 )
 

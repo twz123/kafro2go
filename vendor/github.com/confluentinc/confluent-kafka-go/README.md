@@ -1,8 +1,28 @@
-Confluent's Apache Kafka client for Golang
-==========================================
+Confluent's Golang Client for Apache Kafka<sup>TM</sup>
+=====================================================
 
-Confluent's Kafka client for Golang wraps the librdkafka C library, providing
-full Kafka protocol support with great performance and reliability.
+**confluent-kafka-go** is Confluent's Golang client for [Apache Kafka](http://kafka.apache.org/) and the
+[Confluent Platform](https://www.confluent.io/product/compare/).
+
+Features:
+
+- **High performance** - confluent-kafka-go is a lightweight wrapper around
+[librdkafka](https://github.com/edenhill/librdkafka), a finely tuned C
+client.
+
+- **Reliability** - There are a lot of details to get right when writing an Apache Kafka
+client. We get them right in one place (librdkafka) and leverage this work
+across all of our clients (also [confluent-kafka-python](https://github.com/confluentinc/confluent-kafka-python)
+and [confluent-kafka-dotnet](https://github.com/confluentinc/confluent-kafka-dotnet)).
+
+- **Supported** - Commercial support is offered by
+[Confluent](https://confluent.io/).
+
+- **Future proof** - Confluent, founded by the
+creators of Kafka, is building a [streaming platform](https://www.confluent.io/product/compare/)
+with Apache Kafka at its core. It's high priority for us that client features keep
+pace with core Apache Kafka and components of the [Confluent Platform](https://www.confluent.io/product/compare/).
+
 
 The Golang bindings provides a high-level Producer and Consumer with support
 for the balanced consumer groups of Apache Kafka 0.9 and above.
@@ -12,15 +32,138 @@ See the [API documentation](http://docs.confluent.io/current/clients/confluent-k
 **License**: [Apache License v2.0](http://www.apache.org/licenses/LICENSE-2.0)
 
 
-Beta information
-================
-The Go client is currently in beta and APIs are subject to (minor) change.
+Examples
+========
 
-API strands
+High-level balanced consumer
+
+```golang
+import (
+	"fmt"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
+)
+
+func main() {
+
+	c, err := kafka.NewConsumer(&kafka.ConfigMap{
+		"bootstrap.servers": "localhost",
+		"group.id":          "myGroup",
+		"auto.offset.reset": "earliest",
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	c.SubscribeTopics([]string{"myTopic", "^aRegex.*[Tt]opic"}, nil)
+
+	for {
+		msg, err := c.ReadMessage(-1)
+		if err == nil {
+			fmt.Printf("Message on %s: %s\n", msg.TopicPartition, string(msg.Value))
+		} else {
+			// The client will automatically try to recover from all errors.
+			fmt.Printf("Consumer error: %v (%v)\n", err, msg)
+		}
+	}
+
+	c.Close()
+}
+```
+
+Producer
+
+```golang
+import (
+	"fmt"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
+)
+
+func main() {
+
+	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "localhost"})
+	if err != nil {
+		panic(err)
+	}
+
+	defer p.Close()
+
+	// Delivery report handler for produced messages
+	go func() {
+		for e := range p.Events() {
+			switch ev := e.(type) {
+			case *kafka.Message:
+				if ev.TopicPartition.Error != nil {
+					fmt.Printf("Delivery failed: %v\n", ev.TopicPartition)
+				} else {
+					fmt.Printf("Delivered message to %v\n", ev.TopicPartition)
+				}
+			}
+		}
+	}()
+
+	// Produce messages to topic (asynchronously)
+	topic := "myTopic"
+	for _, word := range []string{"Welcome", "to", "the", "Confluent", "Kafka", "Golang", "client"} {
+		p.Produce(&kafka.Message{
+			TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+			Value:          []byte(word),
+		}, nil)
+	}
+
+	// Wait for message deliveries before shutting down
+	p.Flush(15 * 1000)
+}
+```
+
+More elaborate examples are available in the [examples](examples) directory,
+including [how to configure](examples/confluent_cloud_example) the Go client
+for use with [Confluent Cloud](https://www.confluent.io/confluent-cloud/).
+
+
+Getting Started
+===============
+
+Installing librdkafka
+---------------------
+
+This client for Go depends on librdkafka v0.11.5 or later, so you either need to install librdkafka
+through your OS/distributions package manager, or download and build it from source.
+
+- For Debian and Ubuntu based distros, install `librdkafka-dev` from the standard
+repositories or using [Confluent's Deb repository](http://docs.confluent.io/current/installation.html#installation-apt).
+- For Redhat based distros, install `librdkafka-devel` using [Confluent's YUM repository](http://docs.confluent.io/current/installation.html#rpm-packages-via-yum).
+- For MacOS X, install `librdkafka` from Homebrew.  You may also need to brew install pkg-config if you don't already have it.
+- For Windows, see the `librdkafka.redist` NuGet package.
+
+Build from source:
+
+    git clone https://github.com/edenhill/librdkafka.git
+    cd librdkafka
+    ./configure --prefix /usr
+    make
+    sudo make install
+
+
+Install the client
+-------------------
+
+```
+go get -u github.com/confluentinc/confluent-kafka-go/kafka
+```
+
+See the [examples](examples) for usage details.
+
+Note that the development of librdkafka and the Go client are kept in synch. So
+if you use HEAD on master of the Go client, then you need to use HEAD on master of
+librdkafka. See this [issue](https://github.com/confluentinc/confluent-kafka-go/issues/61#issuecomment-303746159) for more details.
+
+API Strands
 ===========
+
 There are two main API strands: channel based or function based.
 
-Channel based consumer
+Channel Based Consumer
 ----------------------
 
 Messages, errors and events are posted on the consumer.Events channel
@@ -42,7 +185,7 @@ See [examples/consumer_channel_example](examples/consumer_channel_example)
 
 
 
-Function based consumer
+Function Based Consumer
 -----------------------
 
 Messages, errors and events are polled through the consumer.Poll() function.
@@ -61,7 +204,7 @@ See [examples/consumer_example](examples/consumer_example)
 
 
 
-Channel based producer
+Channel Based Producer
 ----------------------
 
 Application writes messages to the producer.ProducerChannel.
@@ -80,7 +223,7 @@ Cons:
 See [examples/producer_channel_example](examples/producer_channel_example)
 
 
-Function based producer
+Function Based Producer
 -----------------------
 
 Application calls producer.Produce() to produce messages.
@@ -99,33 +242,7 @@ Cons:
 See [examples/producer_example](examples/producer_example)
 
 
-
-
-
-
-
-Usage
-=====
-
-See [examples](examples)
-
-
-
-Prerequisites
-=============
-
- * [librdkafka](https://github.com/edenhill/librdkafka) >= 0.9.2 (or `master` branch => 2016-08-16)
-
-
-
-Build
-=====
-
-    $ cd kafka
-    $ go install
-
-
-Static builds
+Static Builds
 =============
 
 **NOTE**: Requires pkg-config
@@ -148,39 +265,13 @@ by default but are available in the corresponding `..-dev` or `..-devel`
 packages (e.g., libsasl2-dev).
 
 After a succesful static build verify the dependencies by running
-`ldd ./your_program`, librdkafka should not be listed.
-
+`ldd ./your_program` (or `otool -L ./your_program` on OSX), librdkafka should not be listed.
 
 
 Tests
 =====
 
 See [kafka/README](kafka/README.md)
-
-
-
-Getting started
-===============
-
-Installing librdkafka
----------------------
-
-    git clone https://github.com/edenhill/librdkafka.git
-    cd librdkafka
-    ./configure --prefix /usr
-    make
-    sudo make install
-
-
-Build the Go client
--------------------
-
-From the confluent-kafka-go directory which should reside
-in `$GOPATH/src/github.com/confluentinc/confluent-kafka-go`:
-
-    cd kafka
-    go install
-
 
 Contributing
 ------------

@@ -2,32 +2,44 @@
 
 
 [[projects]]
+  digest = "1:d091b4c15112c3a24dc5b1b03290a0076fececdc9944c06cb4b8ff039f80d00a"
   name = "github.com/confluentinc/confluent-kafka-go"
   packages = ["kafka"]
-  revision = "a9b5c269c66e9a2eb5f195563b2f01e65a84c527"
-  version = "v0.9.4"
+  pruneopts = ""
+  revision = "460e8e43b282a1a68219df600ef63442b81faf5f"
+  version = "v0.11.6"
 
 [[projects]]
   branch = "master"
+  digest = "1:2a5888946cdbc8aa360fd43301f9fc7869d663f60d5eedae7d4e6e5e4f06f2bf"
   name = "github.com/golang/snappy"
   packages = ["."]
-  revision = "553a641470496b2327abcac10b36396bd98e45c9"
+  pruneopts = ""
+  revision = "2e65f85255dbc3072edf28d6b5b8efc472979f5a"
 
 [[projects]]
-  name = "github.com/karrick/goavro"
+  digest = "1:02e8ee037f1793e43e8296ec6a724e7d04ef33f3d313cf0b621498a07e5000a7"
+  name = "github.com/linkedin/goavro"
   packages = ["."]
-  revision = "7266c9d32b3d0f05950d7aeaa47b506066978a1f"
-  version = "v0.3.1"
+  pruneopts = ""
+  revision = "1beee2a7408830381d63899b90404fccd4d48c58"
+  version = "v2.7.0"
 
 [[projects]]
+  digest = "1:7365acd48986e205ccb8652cc746f09c8b7876030d53710ea6ef7d0bd0dcd7ca"
   name = "github.com/pkg/errors"
   packages = ["."]
+  pruneopts = ""
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "76038df20e505c2f518432790ebf9759cb43200ac223e77ea377a888f8d3c1e0"
+  input-imports = [
+    "github.com/confluentinc/confluent-kafka-go/kafka",
+    "github.com/linkedin/goavro",
+    "github.com/pkg/errors",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1

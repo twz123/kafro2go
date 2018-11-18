@@ -1,4 +1,4 @@
-FROM golang:1.8.3-alpine3.6
+FROM docker.io/golang:1.11.2-alpine3.8
 
 # Install build-deps and fetch librdkafka sources
 RUN set -eux; \
@@ -10,8 +10,8 @@ RUN set -eux; \
         # go stuff
         git \
     ; \
-    wget -q -O /tmp/librdkafka.tar.gz https://github.com/edenhill/librdkafka/archive/v0.11.0.tar.gz; \
-    echo 'd4baf9a0d08767128913bb4e39d68995a95d7efa834fcf3e4f60c3156003b887 */tmp/librdkafka.tar.gz' | sha256sum -c -; \
+    wget -q -O /tmp/librdkafka.tar.gz https://github.com/edenhill/librdkafka/archive/v0.11.6.tar.gz; \
+    echo '9c0afb8b53779d968225edf1e79da48a162895ad557900f75e7978f65e642032 */tmp/librdkafka.tar.gz' | sha256sum -c -; \
     mkdir /librdkafka; \
     tar --strip-components=1 -xzf /tmp/librdkafka.tar.gz -C /librdkafka
 
