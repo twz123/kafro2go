@@ -11,6 +11,7 @@ echo '9c0afb8b53779d968225edf1e79da48a162895ad557900f75e7978f65e642032 */tmp/lib
   TMPDIR="$(mktemp -d)"
   tar --strip-components=1 -xzf /tmp/musl.tar.gz -C "$TMPDIR"
   CDPATH='' cd -- "$TMPDIR"
+  ./configure
   make
   sudo make install
 )
