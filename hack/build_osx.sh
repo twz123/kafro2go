@@ -25,4 +25,4 @@ echo '9c0afb8b53779d968225edf1e79da48a162895ad557900f75e7978f65e642032 */tmp/lib
   sudo make install
 )
 
-go build -a --ldflags '-linkmode external -extldflags "-static"' -tags static cmd/kafro2go.go
+go build -a --ldflags -tags static cmd/kafro2go.go
