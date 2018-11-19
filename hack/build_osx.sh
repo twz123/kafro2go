@@ -8,7 +8,7 @@ TMPDIR="$(mktemp -d)"
 tar --strip-components=1 -xzf /tmp/librdkafka.tar.gz -C "$TMPDIR"
 (
   CDPATH='' cd -- "$TMPDIR"
-  ./configure --enable-static --prefix=/usr
+  ./configure --enable-static --prefix=/usr/local
   make -j
   make check
   make install
