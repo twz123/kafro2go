@@ -9,4 +9,6 @@ branches:
   only:
   - osx
 
-script: hack/build_osx.sh
+script: |
+  brew install librdkafka
+  go build cmd/kafro2go.go
